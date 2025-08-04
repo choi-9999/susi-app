@@ -105,14 +105,13 @@ years = ['2023', '2024', '2025']
 
 for i, idx in enumerate([0, 2, 4], start=1):
     with cols[idx]:
-        key_prefix = f"univ{i}"  # 고유 키 prefix
-
         # 1. 대학 로고+링크+툴팁+아이콘
         default_univ = sorted(df['대학교'].unique())[0]
-        session_key = f"{key_prefix}_대학교"
-        curr_univ = st.session_state.get(session_key, default_univ)
+        univ_key = f"대학교_{i}"
+        curr_univ = st.session_state.get(univ_key, default_univ)
         img_base64, img_mime = get_logo_base64_with_type(curr_univ, dark_mode)
 
+        # 대학 정보 dict에서 자동 매칭
         univ_info = univ_info_dict.get(curr_univ, {})
         univ_url = univ_info.get("url", "#")
         univ_desc = univ_info.get("desc", curr_univ)
@@ -164,15 +163,16 @@ for i, idx in enumerate([0, 2, 4], start=1):
                 unsafe_allow_html=True
             )
 
-        # 2. 필터 박스
-        대학교 = st.selectbox("대학교", sorted(df['대학교'].unique()), key=f"{key_prefix}_대학교")
+
+        # 2. 대학교/계열/전형유형/전형명/모집단위 필터
+        대학교 = st.selectbox("대학교", sorted(df['대학교'].unique()), key=univ_key)
         계열리스트 = sorted(df[df['대학교'] == 대학교]['계열'].dropna().unique())
-        계열 = st.selectbox("계열", 계열리스트, key=f"{key_prefix}_계열")
+        계열 = st.selectbox("계열", 계열리스트, key=f"계열_{i}")
 
         col_type, col_name = st.columns(2)
         with col_type:
             전형유형리스트 = sorted(df[(df['대학교'] == 대학교) & (df['계열'] == 계열)]['전형유형'].dropna().unique())
-            전형유형 = st.selectbox("전형유형", 전형유형리스트, key=f"{key_prefix}_전형유형") if 전형유형리스트 else None
+            전형유형 = st.selectbox("전형유형", 전형유형리스트, key=f"전형유형_{i}") if 전형유형리스트 else None
         with col_name:
             if 전형유형:
                 전형명리스트 = sorted(df[
@@ -180,7 +180,7 @@ for i, idx in enumerate([0, 2, 4], start=1):
                 ]['전형명'].unique())
             else:
                 전형명리스트 = []
-            전형명 = st.selectbox("전형명", 전형명리스트, key=f"{key_prefix}_전형명") if 전형명리스트 else None
+            전형명 = st.selectbox("전형명", 전형명리스트, key=f"전형명_{i}") if 전형명리스트 else None
 
         if 전형유형 and 전형명:
             모집단위리스트 = sorted(df[
@@ -191,7 +191,7 @@ for i, idx in enumerate([0, 2, 4], start=1):
             ]['모집단위명'].unique())
         else:
             모집단위리스트 = []
-        모집단위 = st.selectbox("모집단위명", 모집단위리스트, key=f"{key_prefix}_모집단위명") if 모집단위리스트 else None
+        모집단위 = st.selectbox("모집단위명", 모집단위리스트, key=f"모집단위명_{i}") if 모집단위리스트 else None
 
         # 3. 데이터 추출 및 시각화
         if 전형유형 and 전형명 and 모집단위:
@@ -213,7 +213,6 @@ for i, idx in enumerate([0, 2, 4], start=1):
             경쟁률 = [pd.to_numeric(row.iloc[0].get(f"{y}경쟁률", None), errors='coerce') for y in years]
             충원 = [pd.to_numeric(row.iloc[0].get(f"{y}충원", None), errors='coerce') for y in years]
 
-            # '입결 기준' 값으로 Y축 라벨 자동 반영
             입결기준라벨 = row.iloc[0].get("입결 기준", None)
             if pd.notnull(입결기준라벨) and str(입결기준라벨).strip() != "":
                 yaxis_title = f"입결(등급, {입결기준라벨})"
@@ -241,20 +240,24 @@ for i, idx in enumerate([0, 2, 4], start=1):
                 height=330,
                 margin=dict(l=20, r=20, t=20, b=20)
             )
-            st.plotly_chart(fig, use_container_width=True)
+
+            # ✅ key 추가
+            st.plotly_chart(fig, use_container_width=True, key=f"plotly_chart_{i}")
             st.markdown("---")
 
-            # 주요 정보 표
             st.markdown('<div style="width:310px;"><b>2026학년도 모집 주요 정보</b></div>', unsafe_allow_html=True)
             df_display = pd.DataFrame([
                 {"항목": colnm, "내용": row.iloc[0][colnm]}
                 for colnm in 모집정보_컬럼
                 if colnm in row.columns and pd.notnull(row.iloc[0][colnm]) and str(row.iloc[0][colnm]).strip() != ''
             ])
+
             if df_display.empty:
                 st.info("2026학년도 모집 관련 정보가 없습니다.")
             else:
-                st.dataframe(df_display, hide_index=True, width=1000)
+                # ✅ key 추가
+                st.dataframe(df_display, hide_index=True, width=1000, key=f"df_{i}")
+
 
 # =========================== #
 # 6. 세로 구분선 (점선)
@@ -266,4 +269,3 @@ for idx in [1, 3]:
             "<div style='height:105vh; border-right:2px dashed #e0e0e0; margin:0 0 0 auto'></div>",
             unsafe_allow_html=True
         )
-
