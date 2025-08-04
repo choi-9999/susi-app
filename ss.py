@@ -105,13 +105,14 @@ years = ['2023', '2024', '2025']
 
 for i, idx in enumerate([0, 2, 4], start=1):
     with cols[idx]:
+        key_prefix = f"univ{i}"  # 고유 키 prefix
+
         # 1. 대학 로고+링크+툴팁+아이콘
         default_univ = sorted(df['대학교'].unique())[0]
-        univ_key = f"대학교_{i}"
-        curr_univ = st.session_state.get(univ_key, default_univ)
+        session_key = f"{key_prefix}_대학교"
+        curr_univ = st.session_state.get(session_key, default_univ)
         img_base64, img_mime = get_logo_base64_with_type(curr_univ, dark_mode)
 
-        # 대학 정보 dict에서 자동 매칭
         univ_info = univ_info_dict.get(curr_univ, {})
         univ_url = univ_info.get("url", "#")
         univ_desc = univ_info.get("desc", curr_univ)
@@ -163,16 +164,15 @@ for i, idx in enumerate([0, 2, 4], start=1):
                 unsafe_allow_html=True
             )
 
-
-        # 2. 대학교/계열/전형유형/전형명/모집단위 필터
-        대학교 = st.selectbox("대학교", sorted(df['대학교'].unique()), key=univ_key)
+        # 2. 필터 박스
+        대학교 = st.selectbox("대학교", sorted(df['대학교'].unique()), key=f"{key_prefix}_대학교")
         계열리스트 = sorted(df[df['대학교'] == 대학교]['계열'].dropna().unique())
-        계열 = st.selectbox("계열", 계열리스트, key=f"계열_{i}")
+        계열 = st.selectbox("계열", 계열리스트, key=f"{key_prefix}_계열")
 
         col_type, col_name = st.columns(2)
         with col_type:
             전형유형리스트 = sorted(df[(df['대학교'] == 대학교) & (df['계열'] == 계열)]['전형유형'].dropna().unique())
-            전형유형 = st.selectbox("전형유형", 전형유형리스트, key=f"전형유형_{i}") if 전형유형리스트 else None
+            전형유형 = st.selectbox("전형유형", 전형유형리스트, key=f"{key_prefix}_전형유형") if 전형유형리스트 else None
         with col_name:
             if 전형유형:
                 전형명리스트 = sorted(df[
@@ -180,7 +180,7 @@ for i, idx in enumerate([0, 2, 4], start=1):
                 ]['전형명'].unique())
             else:
                 전형명리스트 = []
-            전형명 = st.selectbox("전형명", 전형명리스트, key=f"전형명_{i}") if 전형명리스트 else None
+            전형명 = st.selectbox("전형명", 전형명리스트, key=f"{key_prefix}_전형명") if 전형명리스트 else None
 
         if 전형유형 and 전형명:
             모집단위리스트 = sorted(df[
@@ -191,7 +191,7 @@ for i, idx in enumerate([0, 2, 4], start=1):
             ]['모집단위명'].unique())
         else:
             모집단위리스트 = []
-        모집단위 = st.selectbox("모집단위명", 모집단위리스트, key=f"모집단위명_{i}") if 모집단위리스트 else None
+        모집단위 = st.selectbox("모집단위명", 모집단위리스트, key=f"{key_prefix}_모집단위명") if 모집단위리스트 else None
 
         # 3. 데이터 추출 및 시각화
         if 전형유형 and 전형명 and 모집단위:
@@ -266,3 +266,4 @@ for idx in [1, 3]:
             "<div style='height:105vh; border-right:2px dashed #e0e0e0; margin:0 0 0 auto'></div>",
             unsafe_allow_html=True
         )
+
