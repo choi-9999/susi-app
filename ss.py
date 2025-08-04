@@ -266,6 +266,7 @@ for i, idx in enumerate([0, 2, 4], start=1):
 for idx in [1, 3]:
     with cols[idx]:
         st.markdown(
-            "<div style='height:105vh; border-right:2px dashed #e0e0e0; margin:0 0 0 auto'></div>",
+            "<div style='height:130vh; border-right:2px dashed #e0e0e0; margin:0 0 0 auto'></div>",
             unsafe_allow_html=True
         )
+
